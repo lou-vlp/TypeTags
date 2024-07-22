@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <set>
+#include <unordered_map>
 #include <bit>
 #include <cmath>
 #include <memory>
@@ -66,7 +66,7 @@ public:
     static TypeInfo Get()
     {
         const auto& info = TypeDescriptor<T>::Info;
-        if (!Types.contains(info))
+        if (!Types.contains(typeid(T).hash_code()))
         {
             throw std::runtime_error("undefined type");
         }
@@ -81,17 +81,18 @@ private:
     static TypeInfo Fresh()
     {
         TypeInfo& info = TypeDescriptor<T>::Info;
-        if (!Types.contains(info))
+        auto hash = typeid(T).hash_code();
+        if (!Types.contains(hash))
         {
             info.tag = Count++;
             info.size = sizeof(T);
-            Types.insert(info);
+            Types[hash] = info;
         }
         return info;
     }
 
     inline static int Count = 0;
-    inline static std::set<TypeInfo> Types;
+    inline static std::unordered_map<size_t, TypeInfo> Types;
 };
 
 template <Interpolatable... Types>
