@@ -168,9 +168,6 @@ private:
 
 #include "Interpolation.h"
 
-
-
-
 struct ParameterHelpers
 {
 public:

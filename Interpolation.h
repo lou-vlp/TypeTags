@@ -1,5 +1,9 @@
 #pragma once
 
+// Explicitly provide interpolation behavior for things we care to interpolate
+template <typename T>
+struct Interpolant;
+
 // Rely on std::lerp for floating-point types
 template <typename T> requires std::floating_point<T>
 struct Interpolant<T>
