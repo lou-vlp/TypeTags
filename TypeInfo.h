@@ -4,6 +4,8 @@
 #include <concepts>
 #include <stdexcept>
 #include <unordered_map>
+#include <typeinfo>
+
 
 // Explicitly provide interpolation behavior for things we care to interpolate
 template <typename T>
@@ -20,12 +22,13 @@ concept Interpolatable = requires(const T& a, const T& b, float t)
 struct TypeInfo
 {
     static const TypeInfo Invalid;
+
     size_t tag;
     size_t size;
 
     friend constexpr auto operator<=>(TypeInfo, TypeInfo) = default;
 };
-const TypeInfo TypeInfo::Invalid = { static_cast<size_t>(-1), 0 };
+
 
 // C++ type to TypeInfo mapping
 template<Interpolatable T>
@@ -40,50 +43,61 @@ class TypeMap
 {
 public:
     template <Interpolatable T>
-    static TypeInfo Get()
-    {
-        const auto& info = TypeDescriptor<T>::Info;
-        if (!Types.contains(typeid(T).hash_code()))
-        {
-            throw std::runtime_error("undefined type");
-        }
-        return info;
-    }
+    static TypeInfo Get();
 
 private:
     template <Interpolatable... Types>
-    friend class InitGlobalTypeIndices;
+    friend class TypeList;
 
     template <Interpolatable T>
-    static TypeInfo Fresh()
-    {
-        TypeInfo& info = TypeDescriptor<T>::Info;
-        auto hash = typeid(T).hash_code();
-        if (!Types.contains(hash))
-        {
-            info.tag = Count++;
-            info.size = sizeof(T);
-            Types[hash] = info;
-        }
-        return info;
-    }
+    static TypeInfo NewType();
 
     inline static int Count = 0;
     inline static std::unordered_map<size_t, TypeInfo> Types;
 };
 
+template <Interpolatable T>
+TypeInfo TypeMap::Get()
+{
+    const auto& info = TypeDescriptor<T>::Info;
+    if (!Types.contains(typeid(T).hash_code()))
+    {
+        throw std::runtime_error("undefined type");
+    }
+    return info;
+}
+
+template <Interpolatable T>
+TypeInfo TypeMap::NewType()
+{
+    TypeInfo& info = TypeDescriptor<T>::Info;
+    auto hash = typeid(T).hash_code();
+    if (!Types.contains(hash))
+    {
+        info.tag = Count++;
+        info.size = sizeof(T);
+        Types[hash] = info;
+    }
+    return info;
+}
+
+class TypeRegistry
+{
+
+};
+
 // Type registration.  Used to generate type GUIDs.
 template <Interpolatable... Types>
-class InitGlobalTypeIndices
+class TypeList
 {
 public:
-    InitGlobalTypeIndices()
+    TypeList()
     {
         AddTypes();
     }
 
     static constexpr size_t Count() { return sizeof...(Types); }
-    using TypeList = std::tuple<Types...>;
+    using TypeTuple = std::tuple<Types...>;
 
 private:
     template <size_t N = 0>
@@ -91,8 +105,8 @@ private:
     {
         if constexpr (N < Count())
         {
-            using Type = typename std::tuple_element<N, TypeList>::type;
-            TypeDescriptor<Type>::Info = TypeMap::Fresh<Type>();
+            using Type = typename std::tuple_element<N, TypeTuple>::type;
+            TypeDescriptor<Type>::Info = TypeMap::NewType<Type>();
             AddTypes<N + 1>();
         }
     }

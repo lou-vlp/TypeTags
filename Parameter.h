@@ -7,47 +7,17 @@
 class Parameter
 {
 public:
-    Parameter() noexcept : info(TypeInfo::Invalid)
-    {
-    }
-
-    Parameter(Parameter&& other) noexcept : info(other.info), value(std::move(other.value))
-    {
-    }
-
-    Parameter(const Parameter& other)
-        : info(other.info)
-        , value(other.value)
-    {
-    }
-
-    Parameter& operator=(const Parameter& other)
-    {
-        if (this != &other)
-        {
-            info = other.info;
-            value = other.value;
-        }
-        return *this;
-    }
-
-    Parameter& operator=(Parameter&& other) noexcept
-    {
-        if (this != &other)
-        {
-            info = other.info;
-            value = std::move(other.value);
-        }
-        return *this;
-    }
+    Parameter() noexcept;
+    Parameter(Parameter&& other) noexcept;
+    Parameter(const Parameter& other);
 
     template<Interpolatable T>
     explicit Parameter(T x);
 
-    ~Parameter()
-    {
-        value.reset();
-    }
+    ~Parameter();
+
+    Parameter& operator=(const Parameter& other);
+    Parameter& operator=(Parameter&& other) noexcept;
 
     template <Interpolatable T>
     const T Get() const noexcept;
@@ -63,3 +33,26 @@ private:
     TypeInfo info;
     std::any value;
 };
+
+template<Interpolatable T>
+Parameter::Parameter(T x) : info(TypeMap::Get<T>())
+{
+    value = x;
+}
+
+template <Interpolatable T>
+const T Parameter::Get() const noexcept
+{
+    assert(info == TypeDescriptor<T>::Info);
+    return std::any_cast<T>(value);
+}
+
+template <Interpolatable T>
+T& Parameter::Get()
+{
+    if (info != TypeDescriptor<T>::Info)
+    {
+        throw std::invalid_argument("type mismatch");
+    }
+    return std::any_cast<T>(value);
+}

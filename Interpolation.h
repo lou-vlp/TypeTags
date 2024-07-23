@@ -1,6 +1,10 @@
 #pragma once
 
-// Explicitly provide interpolation behavior for things we care to interpolate
+// This file defines interpolation behavior for the types that we may want to interpolate,
+// as well as a list of allowed parameter types.
+//
+// The position of a parameter type in this list is used as a type GUID.
+
 template <typename T>
 struct Interpolant;
 
@@ -25,4 +29,4 @@ struct Interpolant<T>
 };
 
 // Enforce globally consistent type indices
-const InitGlobalTypeIndices<int, float, double> KeyframableTypes;
+static const TypeList<int, float, double> KeyframableTypes;
