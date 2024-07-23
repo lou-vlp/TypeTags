@@ -11,11 +11,10 @@ struct Interpolant;
 
 // Constrain operations to things that are interpolatable
 template<typename T>
-concept Interpolatable = requires(const T & a, const T & b, float t)
+concept Interpolatable = requires(const T& a, const T& b, float t)
 {
     { Interpolant<T>::Lerp(a, b, t) } -> std::same_as<T>;
 };
-
 
 // Type-indexed type descriptor
 struct TypeInfo

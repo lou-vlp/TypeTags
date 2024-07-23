@@ -14,13 +14,13 @@ struct Interpolant<T>
     }
 };
 
-// Special treatment for ints
-template<>
-struct Interpolant<int>
+// Integral types are temporarily cast to double and then quantized back.
+template <typename T> requires std::integral<T>
+struct Interpolant<T>
 {
-    static int Lerp(const int& x, const int& y, float t) noexcept
+    static T Lerp(const T& x, const T& y, float t) noexcept
     {
-        return static_cast<int>(t * static_cast<float>(y - x) + float(x));
+        return static_cast<T>(std::lerp(static_cast<double>(x), static_cast<double>(y), t));
     }
 };
 
