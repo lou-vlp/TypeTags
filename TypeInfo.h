@@ -81,11 +81,6 @@ TypeInfo TypeMap::NewType()
     return info;
 }
 
-class TypeRegistry
-{
-
-};
-
 // Type registration.  Used to generate type GUIDs.
 template <Interpolatable... Types>
 class TypeList
