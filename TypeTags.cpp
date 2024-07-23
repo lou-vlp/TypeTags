@@ -48,7 +48,7 @@ struct TypeInfo
 
     friend constexpr auto operator<=>(TypeInfo, TypeInfo) = default;
 };
-const TypeInfo TypeInfo::Invalid = { static_cast<size_t>(-1), 0};
+const TypeInfo TypeInfo::Invalid = { static_cast<size_t>(-1), 0 };
 
 
 
@@ -127,9 +127,8 @@ const InitGlobalTypeIndices<int, float, double> KeyframableTypes;
 class Parameter
 {
 public:
-    Parameter() noexcept : storage(nullptr)
+    Parameter() noexcept : info(TypeInfo::Invalid), storage(nullptr)
     {
-        info = TypeInfo::Invalid;
     }
 
     Parameter(Parameter&& other) noexcept : info(other.info), storage(std::move(other.storage))
@@ -156,8 +155,12 @@ public:
 
     Parameter& operator=(Parameter&& other) noexcept
     {
-        info = other.info;
-        storage = std::move(other.storage);
+        if (this != &other)
+        {
+            info = other.info;
+            storage.reset();
+            storage = std::move(other.storage);
+        }
         return *this;
     }
 
@@ -187,7 +190,7 @@ private:
 struct ParameterHelpers
 {
 public:
-    static Parameter Get(const Parameter& a, const Parameter& b, float t)
+    static Parameter Lerp(const Parameter& a, const Parameter& b, float t)
     {
         assert(a.TypeTag() == b.TypeTag());
         return Apply(a, b, t, a.TypeTag());
@@ -239,14 +242,14 @@ template<Interpolatable T>
 Parameter::Parameter(T x) : info(TypeMap::Get<T>())
 {
     storage = std::make_unique<std::byte[]>(info.size);
-    *bit_cast<T*>(storage.get()) = x;
+    *std::bit_cast<T*>(storage.get()) = x;
 }
 
 template <Interpolatable T>
 const T& Parameter::Get() const noexcept
 {
     assert(info == TypeDescriptor<T>::Info);
-    return *bit_cast<T*>(storage.get());
+    return *std::bit_cast<T*>(storage.get());
 }
 
 template <Interpolatable T>
@@ -256,7 +259,7 @@ T& Parameter::Get()
     {
         throw std::invalid_argument("type mismatch");
     }
-    return *bit_cast<T*>(storage.get());
+    return *std::bit_cast<T*>(storage.get());
 }
 
 Parameter Parameter::Lerp(const Parameter& a, const Parameter& b, float t)
@@ -265,7 +268,7 @@ Parameter Parameter::Lerp(const Parameter& a, const Parameter& b, float t)
     {
         throw std::invalid_argument("type mismatch");
     }
-    return ParameterHelpers::Get(a, b, t);
+    return ParameterHelpers::Lerp(a, b, t);
 }
 
 namespace std
@@ -274,7 +277,7 @@ namespace std
     {
         return ParameterHelpers::Print(param);
     }
-    
+
     ostream& operator<<(ostream& str, const Parameter& param)
     {
         return str << to_string(param);
@@ -298,8 +301,7 @@ int main()
 
     for (int i = 0; i < A.size(); i++)
     {
-        std::cout << "A = " << A[i] << ", "
-            << "B = " << B[i] << ", "
+        std::cout << "A = " << A[i] << ", " << "B = " << B[i] << ", "
             << "lerp(A,B,0.25) = " << Parameter::Lerp(A[i], B[i], 0.25f) << std::endl;
     }
 }
