@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include <bit>
+#include <any>
 #include <cmath>
 #include <memory>
 #include <cstring>
@@ -127,19 +128,18 @@ const InitGlobalTypeIndices<int, float, double> KeyframableTypes;
 class Parameter
 {
 public:
-    Parameter() noexcept : info(TypeInfo::Invalid), storage(nullptr)
+    Parameter() noexcept : info(TypeInfo::Invalid)
     {
     }
 
-    Parameter(Parameter&& other) noexcept : info(other.info), storage(std::move(other.storage))
+    Parameter(Parameter&& other) noexcept : info(other.info), value(std::move(other.value))
     {
     }
 
     Parameter(const Parameter& other)
         : info(other.info)
-        , storage(std::make_unique<std::byte[]>(other.info.size))
+        , value(other.value)
     {
-        std::memcpy(storage.get(), other.storage.get(), info.size);
     }
 
     Parameter& operator=(const Parameter& other)
@@ -147,8 +147,7 @@ public:
         if (this != &other)
         {
             info = other.info;
-            storage = std::make_unique<std::byte[]>(info.size);
-            std::memcpy(storage.get(), other.storage.get(), info.size);
+            value = other.value;
         }
         return *this;
     }
@@ -158,8 +157,7 @@ public:
         if (this != &other)
         {
             info = other.info;
-            storage.reset();
-            storage = std::move(other.storage);
+            value = std::move(other.value);
         }
         return *this;
     }
@@ -169,11 +167,10 @@ public:
 
     ~Parameter()
     {
-        storage.reset();
     }
 
     template <Interpolatable T>
-    const T& Get() const noexcept;
+    const T Get() const noexcept;
 
     template <Interpolatable T>
     T& Get();
@@ -184,7 +181,7 @@ public:
 
 private:
     TypeInfo info;
-    std::unique_ptr<std::byte[]> storage;
+    std::any value;
 };
 
 struct ParameterHelpers
@@ -241,15 +238,14 @@ private:
 template<Interpolatable T>
 Parameter::Parameter(T x) : info(TypeMap::Get<T>())
 {
-    storage = std::make_unique<std::byte[]>(info.size);
-    *std::bit_cast<T*>(storage.get()) = x;
+    value = x;
 }
 
 template <Interpolatable T>
-const T& Parameter::Get() const noexcept
+const T Parameter::Get() const noexcept
 {
     assert(info == TypeDescriptor<T>::Info);
-    return *std::bit_cast<T*>(storage.get());
+    return std::any_cast<T>(value);
 }
 
 template <Interpolatable T>
@@ -259,7 +255,7 @@ T& Parameter::Get()
     {
         throw std::invalid_argument("type mismatch");
     }
-    return *std::bit_cast<T*>(storage.get());
+    return std::any_cast<T>(value);
 }
 
 Parameter Parameter::Lerp(const Parameter& a, const Parameter& b, float t)
