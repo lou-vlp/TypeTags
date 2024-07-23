@@ -1,27 +1,14 @@
 #include <iostream>
 #include <vector>
-#include <unordered_map>
-#include <bit>
-#include <any>
-#include <cmath>
-#include <memory>
-#include <cstring>
-#include <cassert>
-#include <string>
-
+#
 #include "TypeTags.h"
 
 // misc hacky helper/viz stuff
 namespace std
 {
-    inline string to_string(const Parameter& param)
-    {
-        return ParameterHelpers::Print(param);
-    }
-
     ostream& operator<<(ostream& str, const Parameter& param)
     {
-        return str << to_string(param);
+        return str << ParameterHelpers::Print(param);
     }
 }
 
