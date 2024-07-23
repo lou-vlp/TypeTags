@@ -137,6 +137,10 @@
   <ItemGroup>
     <ClCompile Include="TypeTags.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Interpolation.h" />
+    <ClInclude Include="TypeTags.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
