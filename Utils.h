@@ -12,19 +12,19 @@
 struct ParameterHelpers
 {
 public:
-    static Parameter Lerp(const Parameter& a, const Parameter& b, float t);
+    static Parameter Mix(const Parameter& a, const Parameter& b, float t);
     static std::string Print(const Parameter& param);
 
 private:
     template <size_t N = 0>
-    static Parameter Lerp(const Parameter& a, const Parameter& b, float t, size_t typeTag);
+    static Parameter Mix(const Parameter& a, const Parameter& b, float t, size_t typeTag);
 
     template <size_t N>
     static std::string Print(const Parameter& param);
 };
 
 template <size_t N>
-static Parameter ParameterHelpers::Lerp(const Parameter& a, const Parameter& b, float t, size_t typeTag)
+static Parameter ParameterHelpers::Mix(const Parameter& a, const Parameter& b, float t, size_t typeTag)
 {
     if constexpr (N < KeyframableTypes.Count())
     {
@@ -33,10 +33,10 @@ static Parameter ParameterHelpers::Lerp(const Parameter& a, const Parameter& b, 
 
         if (info.tag == typeTag)
         {
-            const auto val = Interpolant<Type>::Lerp(a.Get<Type>(), b.Get<Type>(), t);
+            const auto val = Interpolant<Type>::Mix(a.Get<Type>(), b.Get<Type>(), t);
             return Parameter(val);
         }
-        return Lerp<N + 1>(a, b, t, typeTag);
+        return Mix<N + 1>(a, b, t, typeTag);
     }
 
     throw std::runtime_error("Type not found");

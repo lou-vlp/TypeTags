@@ -12,7 +12,7 @@ struct Interpolant;
 template <typename T> requires std::floating_point<T>
 struct Interpolant<T>
 {
-    static T Lerp(const T& x, const T& y, float t) noexcept
+    static T Mix(const T& x, const T& y, float t) noexcept
     {
         return std::lerp(x, y, t);
     }
@@ -22,7 +22,7 @@ struct Interpolant<T>
 template <typename T> requires std::integral<T>
 struct Interpolant<T>
 {
-    static T Lerp(const T& x, const T& y, float t) noexcept
+    static T Mix(const T& x, const T& y, float t) noexcept
     {
         return static_cast<T>(std::lerp(static_cast<double>(x), static_cast<double>(y), t));
     }
